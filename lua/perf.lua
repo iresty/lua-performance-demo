@@ -1,5 +1,6 @@
 local math_random = math.random
 local table_concat = table.concat
+local new_tab = require "table.new"
 
 -- uri_charset
 local uri_charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._~:/@!,;=+*-"
@@ -38,30 +39,37 @@ local function init()
     math.randomseed(seed)
 end
 
-local function gen_uri_comp()
-    local value = {}
-    local len = math_random(20) -- between 1 and 20
-
-    for i = 1, len do
-        value[i] = uri_random_charset[math_random(uri_charset_length)]
+local function gen_uri_comp(body, len)
+    local n = math_random(20) -- between 1 and 20
+    for i = 1, n do
+        len = len + 1
+        body[len] = uri_random_charset[math_random(uri_charset_length)]
     end
-
-    return table_concat(value, "")
+    return len
 end
 
-local function gen_body()
-    local body = ''
+local gen_body
+do
+    local body = new_tab(1000 * 20, 0)
+
+function gen_body()
+    local len = 0
     local n = math_random(1000)
 
     for i = 1, n do
-        body = body .. gen_uri_comp() .. "=" .. gen_uri_comp()
+        len = gen_uri_comp(body, len)
+        len = len + 1
+        body[len] = "="
+        len = gen_uri_comp(body, len)
         if i < n then
-            body = body .. "&"
+            len = len + 1
+            body[len] = "&"
         end
     end
-    return body
+    return table_concat(body, "", 1, len)
 end
 
+end --do
 
 local function run()
     local response = gen_body()
